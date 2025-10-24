@@ -19,6 +19,14 @@ on:
         required: false
         type: string
         default: "rasmus"
+      model:
+        required: false
+        type: string
+        default: "gpt-5-codex"
+      sandbox:
+        required: false
+        type: string
+        default: "danger-full-access"
       skip_ci:
         required: false
         type: string
@@ -113,14 +121,26 @@ jobs:
         uses: openai/codex-action@v1
         with:
           openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          model: ${{ inputs.model }}
+          sandbox: ${{ inputs.sandbox }}
           prompt: |
             This is PR #${{ fromJson(needs.command.outputs.pull_request).number }} for ${{ github.repository }}.
             Base SHA: ${{ fromJson(needs.command.outputs.pull_request).base.sha }}
             Head SHA: ${{ fromJson(needs.command.outputs.pull_request).head.sha }}
 
-            Review ONLY the changes introduced by the PR.
+            Review ONLY the changes introduced by the PR, so consider:
+            ```
+            git log --oneline ${{ fromJson(needs.command.outputs.pull_request).base.sha }}...${{ fromJson(needs.command.outputs.pull_request).head.sha }}
+            ```
+               
             Suggest any improvements, potential bugs, or issues.
             Be concise and specific in your feedback.
+
+            Read and follow the repository's contribution guidelines as well
+            as any guidelines for AI agents. Typically these can be found
+            in the following files:
+            - `AGENTS.md`
+            - `.github/copilot-instructions.md`
 
             Pull request title and body:
             ----
