@@ -15,10 +15,10 @@ on:
     types: [created]
 
 permissions:
-	pull-requests: write
-	issues: write
-	checks: read
-	contents: read
+  pull-requests: write
+  issues: write
+  checks: read
+  contents: read
 
 jobs:
   review:
