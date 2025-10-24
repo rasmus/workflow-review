@@ -1,0 +1,21 @@
+name: Perform a code review
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  pull-requests: write
+  issues: write
+  checks: read
+  contents: read
+
+jobs:
+  pipeline:
+    uses: ./.github/workflows/pipeline.yaml
+    with:
+      pull_request_number: ${{ github.event.issue.number }}
+      allow_drafts: "true"
+      skip_ci: "true"
+    secrets:
+      openai_api_key: ${{ secrets.OPENAI_API_KEY }}
