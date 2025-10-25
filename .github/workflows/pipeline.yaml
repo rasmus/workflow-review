@@ -128,11 +128,15 @@ jobs:
             Base SHA: ${{ fromJson(needs.command.outputs.pull_request).base.sha }}
             Head SHA: ${{ fromJson(needs.command.outputs.pull_request).head.sha }}
 
-            Review ONLY the changes introduced by the PR, so consider:
+            Review the changes introduced by the PR, so consider:
             ```
             git log --oneline ${{ fromJson(needs.command.outputs.pull_request).base.sha }}...${{ fromJson(needs.command.outputs.pull_request).head.sha }}
             ```
-               
+
+            While focusing on the changes for the PR itself, analyze how the PR additions impact
+            the codebase and if the changes are implemneted in a clean and slick way. Don't bother
+            with small problems or nitpicking, try to focus on issues that are of high or medium impact.
+
             Suggest any improvements, potential bugs, or issues.
             Be concise and specific in your feedback.
 
