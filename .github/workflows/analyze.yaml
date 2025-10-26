@@ -46,6 +46,7 @@ jobs:
         id: command
         with:
           allowlist: "${{ inputs.allowlist }}"
+          allowed_contexts: "issue"
           allow_drafts: "true"
           allow_forks: "false"
           command: ".analyze"

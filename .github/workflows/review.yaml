@@ -59,6 +59,7 @@ jobs:
         id: command
         with:
           allowlist: "${{ inputs.allowlist }}"
+          allowed_contexts: "pull_request"
           allow_drafts: "${{ inputs.allow_drafts }}"
           allow_forks: "${{ inputs.allow_forks }}"
           command: ".review"
