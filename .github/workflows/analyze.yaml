@@ -1,0 +1,147 @@
+name: analyze
+
+on:
+  workflow_call:
+    inputs:
+      issue_number:
+        required: true
+        type: string
+      # OPTIONAL ===================
+      allowlist:
+        required: false
+        type: string
+        default: "rasmus"
+      model:
+        required: false
+        type: string
+        default: "gpt-5-codex"
+      sandbox:
+        required: false
+        type: string
+        default: "danger-full-access"
+    secrets:
+      openai_api_key:
+        required: true
+
+jobs:
+  command:
+    runs-on: ubuntu-latest
+
+    outputs:
+      continue: ${{ steps.command.outputs.continue }}
+      issue: ${{ steps.issue.outputs.issue }}
+
+    defaults:
+      run:
+        shell: bash
+
+    permissions:
+      issues: write
+      checks: read
+      contents: read
+
+    steps:
+      - name: Command evaluation
+        uses: github/command@v2
+        id: command
+        with:
+          allowlist: "${{ inputs.allowlist }}"
+          allowed_contexts: "issue"
+          allow_drafts: "true"
+          allow_forks: "false"
+          command: ".analyze"
+          reaction: "eyes"
+          skip_ci: "true"
+          skip_reviews: "true"
+
+      - name: Issue info
+        if: ${{ steps.command.outputs.continue == 'true' }}
+        id: issue
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.github_token }}
+          result-encoding: json
+          issue-number: ${{ inputs.issue_number }}
+          script: |
+            const issueNumber = Number(core.getInput('issue-number', { required: true }).trim());
+            if (Number.isNaN(issueNumber)) {
+              throw new Error(`Expected numeric issue number but received: ${issueNumber}`);
+            }
+
+            const { data } = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+            });
+
+            core.setOutput('issue', JSON.stringify(data));
+            return data;
+
+  codex:
+    runs-on: ubuntu-latest
+    needs: command
+    if: ${{ needs.command.outputs.continue == 'true' }}
+
+    permissions:
+      contents: read
+
+    outputs:
+      final_message: ${{ steps.run_codex.outputs.final-message }}
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Run Codex
+        id: run_codex
+        uses: openai/codex-action@v1
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          model: ${{ inputs.model }}
+          sandbox: ${{ inputs.sandbox }}
+          prompt: |
+            You are an expert software engineer and GitHub issues analyst. Your task is to help
+            analyze and provide insights on GitHub issues based on the codebase of the repository.
+            The audience for your analysis are other software engineers and project maintainers.
+
+            You will formulate your answers using markdown formatting to ensure clarity and readability.
+            Your answers will ALWAYS be precise and respectful and ALWAYS stay on topic. The topic is
+            defined as subjects that are directly relevant for the project and code repository. Be
+            sure to read the README.md, or similar files, in the repository root. You will ALWAYS
+            sign your answers at the end with "Your friendly neighborhood AI".
+
+            Your task is to analyze the specific issue #${{ fromJson(needs.command.outputs.issue).number }}
+            for ${{ github.repository }} that is provided below and the codebase already available here
+            in the directory, provide a deep analysis of the issue described. If it is a question,
+            provide a detailed answer. If it is a bug report, provide steps to reproduce and potential
+            fixes. If it is a feature request, provide an assessment of its feasibility and potential
+            implementation strategies.
+
+            Issue title and body:
+            ----
+            ${{ fromJson(needs.command.outputs.issue).title }}
+            ${{ fromJson(needs.command.outputs.issue).body }}
+
+  post_feedback:
+    runs-on: ubuntu-latest
+    needs: codex
+    if: needs.codex.outputs.final_message != ''
+
+    permissions:
+      issues: write
+
+    steps:
+      - name: Report Codex feedback
+        uses: actions/github-script@v7
+        env:
+          CODEX_FINAL_MESSAGE: ${{ needs.codex.outputs.final_message }}
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ inputs.issue_number }},
+              body: process.env.CODEX_FINAL_MESSAGE,
+            });
