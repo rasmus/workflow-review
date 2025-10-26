@@ -147,6 +147,8 @@ jobs:
             - `AGENTS.md`
             - `.github/copilot-instructions.md`
 
+            You will ALWAYS sign your answers at the end with "Your friendly neighborhood AI".
+
             Pull request title and body:
             ----
             ${{ fromJson(needs.command.outputs.pull_request).title }}
