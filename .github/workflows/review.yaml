@@ -135,7 +135,7 @@ jobs:
             ```
 
             While focusing on the changes for the PR itself, analyze how the PR additions impact
-            the codebase and if the changes are implemneted in a clean and slick way. Don't bother
+            the codebase and if the changes are implemented in a clean and slick way. Don't bother
             with small problems or nitpicking, try to focus on issues that are of high or medium impact.
 
             Suggest any improvements, potential bugs, or issues.
