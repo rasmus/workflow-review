@@ -22,7 +22,7 @@ on:
       model:
         required: false
         type: string
-        default: "gpt-5-codex"
+        default: "gpt-5.1-codex"
       sandbox:
         required: false
         type: string
